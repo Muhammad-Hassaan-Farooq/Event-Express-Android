@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Event Express</string>
+
+    <!-- Login Page strings -->
+    <string name="login_header">Welcome Back</string>
+    <string name="login_subtitle">Please enter your details to sign in</string>
+    <string name="email">E-mail Address</string>
+    <string name="email_placeholder">Enter your email…</string>
+    <string name="password_placeholder">● ● ● ● ● ● ●</string>
+    <string name="password">Password</string>
+    <string name="remember_me">Remember Me</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="no_account">Don\'t have an account yet?</string>
+    <string name="sign_up_link">Sign Up</string>
+
+    <!-- Signup page strings-->
+    <string name="signup_header">Welcome</string>
+    <string name="signup_subtitle">Please enter your details to sign up</string>
+    <string name="first_name">First Name</string>
+    <string name="first_name_placeholder">Enter you first name</string>
+    <string name="last_name">Last Name</string>
+    <string name="last_name_placeholder">Enter you last name</string>
+    <string name="existing_account">Already have an account?</string>
+    <string name="login_link">Log in</string>
+</resources>
