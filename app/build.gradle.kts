@@ -80,6 +80,9 @@ dependencies {
     //navigation
     implementation(libs.androidx.navigation.compose)
 
+    //jwt
+    implementation("com.auth0.android:jwtdecode:2.0.2")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

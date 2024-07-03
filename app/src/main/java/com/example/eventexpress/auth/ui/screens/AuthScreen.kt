@@ -7,10 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.eventexpress.auth.data.LoginUIState
 import com.example.eventexpress.auth.ui.AuthViewModel
 
 @Composable
-fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit) {
+fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit,setUser:(token:String,role:String)->Unit) {
 
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
     val currentScreen = authViewModel.currentScreen.collectAsState()
@@ -18,6 +19,14 @@ fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit) {
 
     fun handleLogin(email: String, password: String) {
 
+        authViewModel.login(email, password,setUser)
+
+
+
+    }
+
+    fun handleSignUp(fName: String, lName: String, email: String, password: String) {
+        authViewModel.signup(fName, lName, email, password)
     }
 
 
@@ -35,7 +44,9 @@ fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit) {
             modifier = modifier,
             changeScreen = { authViewModel.changeScreen("signup") },
             onSuccessfulLogin = onSuccessfulSignIn,
-            loginState = authViewModel.loginUIState
+            loginState = authViewModel.loginUIState,
+            handleLogin = ::handleLogin,
+            clearError = { authViewModel.clearError() }
         )
     }
 
@@ -50,7 +61,12 @@ fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit) {
             +fullWidth
         }
     ) {
-        SignupScreen(modifier = modifier, changeScreen = { authViewModel.changeScreen("login") })
+        SignupScreen(
+            modifier = modifier,
+            changeScreen = { authViewModel.changeScreen("login") },
+            signupUIState = authViewModel.signupUIState,
+            handleSignUp = ::handleSignUp
+        )
     }
 
 }

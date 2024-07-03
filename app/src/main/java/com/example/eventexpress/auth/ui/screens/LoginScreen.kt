@@ -1,5 +1,6 @@
 package com.example.eventexpress.auth.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -22,7 +24,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,10 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
@@ -51,17 +57,17 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     changeScreen: ()->Unit,
     onSuccessfulLogin:()->Unit,
-    loginState: MutableStateFlow<LoginUIState>
+    loginState: MutableStateFlow<LoginUIState>,
+    handleLogin: (String,String)->Unit,
+    clearError:()->Unit
 ) {
 
-    var uiState = loginState.collectAsState()
-
-    println(uiState.toString())
+    val uiState = loginState.collectAsState()
 
 
-    fun handleLogin(){
 
-    }
+
+
 
     var email by rememberSaveable {
         mutableStateOf("")
@@ -139,7 +145,7 @@ fun LoginScreen(
                     Text(text = stringResource(id = R.string.email), fontWeight = FontWeight.Bold)
                 }
                 OutlinedTextField(
-                    value = "", onValueChange = {}, modifier = Modifier
+                    value = email, onValueChange = {email=it;clearError() }, modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                     shape = RoundedCornerShape(16.dp),
@@ -149,6 +155,25 @@ fun LoginScreen(
 
                         )
                     },
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = when(uiState.value){
+                            is LoginUIState.Error -> MaterialTheme.colorScheme.errorContainer
+                            LoginUIState.Idle -> MaterialTheme.colorScheme.secondaryContainer
+                            LoginUIState.Loading -> MaterialTheme.colorScheme.secondaryContainer
+                            is LoginUIState.Success -> MaterialTheme.colorScheme.secondaryContainer
+                        },
+                        unfocusedIndicatorColor = when(uiState.value){
+                            is LoginUIState.Error -> MaterialTheme.colorScheme.errorContainer
+                            LoginUIState.Idle -> MaterialTheme.colorScheme.secondaryContainer
+                            LoginUIState.Loading -> MaterialTheme.colorScheme.secondaryContainer
+                            is LoginUIState.Success -> MaterialTheme.colorScheme.secondaryContainer
+                        },
+                        unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer
+
+
+                    )
+
 
                 )
             }
@@ -168,7 +193,7 @@ fun LoginScreen(
                     )
                 }
                 OutlinedTextField(
-                    value = password, onValueChange = { password = it },
+                    value = password, onValueChange = { password = it;clearError() },
                     trailingIcon = {
                         val image =
                             if (!showPassword) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -180,6 +205,23 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                     shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = when(uiState.value){
+                            is LoginUIState.Error -> MaterialTheme.colorScheme.errorContainer
+                            LoginUIState.Idle -> MaterialTheme.colorScheme.secondaryContainer
+                            LoginUIState.Loading -> MaterialTheme.colorScheme.secondaryContainer
+                            is LoginUIState.Success -> MaterialTheme.colorScheme.secondaryContainer
+                        },
+                        unfocusedIndicatorColor =when(uiState.value){
+                            is LoginUIState.Error -> MaterialTheme.colorScheme.errorContainer
+                            LoginUIState.Idle -> MaterialTheme.colorScheme.secondaryContainer
+                            LoginUIState.Loading -> MaterialTheme.colorScheme.secondaryContainer
+                            is LoginUIState.Success -> MaterialTheme.colorScheme.secondaryContainer
+                        },
+                        unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        focusedContainerColor = MaterialTheme.colorScheme.primaryContainer
+
+                    ),
 
                     placeholder = {
                         Text(
@@ -188,7 +230,7 @@ fun LoginScreen(
                         )
                     },
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                     )
             }
             Column(
@@ -223,14 +265,17 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
                         shape = RoundedCornerShape(10.dp),
-                        onClick = { handleLogin() },
+                        onClick = {
+                            handleLogin(email,password)
+                        },
                         enabled = uiState.value == LoginUIState.Idle
 
                     ) {
 
                         when(uiState.value){
                             is LoginUIState.Error -> Text(
-                                text = stringResource(id = R.string.sign_in),
+                                text = (uiState.value as LoginUIState.Error).message,
+                                color = MaterialTheme.colorScheme.error
 
                                 )
                             LoginUIState.Idle -> Text(
@@ -238,10 +283,13 @@ fun LoginScreen(
 
                                 )
                             LoginUIState.Loading -> CircularProgressIndicator()
-                            is LoginUIState.Success -> Text(
-                                text = stringResource(id = R.string.sign_in),
-
+                            is LoginUIState.Success -> {
+                                Text(
+                                    text = stringResource(id = R.string.sign_in),
                                 )
+                                Toast.makeText(LocalContext.current, "login successful",Toast.LENGTH_SHORT).show()
+                                onSuccessfulLogin()
+                            }
                         }
 
                     }
@@ -266,8 +314,6 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     EventExpressTheme {
-        LoginScreen(modifier = Modifier, changeScreen = {}, onSuccessfulLogin = {},
-            MutableStateFlow(LoginUIState.Idle)
-        )
+
     }
 }
