@@ -4,23 +4,31 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.eventexpress.auth.data.LoginUIState
 import com.example.eventexpress.auth.ui.AuthViewModel
 
 @Composable
-fun AuthScreen(modifier: Modifier = Modifier, onSuccessfulSignIn: () -> Unit,setUser:(token:String,role:String)->Unit) {
+fun AuthScreen(
+    modifier: Modifier = Modifier,
+    onSuccessfulSignIn: () -> Unit,
+    setUser: (token: String, role: String) -> Unit,
+    clearUser: ()->Unit
+) {
 
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
     val currentScreen = authViewModel.currentScreen.collectAsState()
 
+    LaunchedEffect(Unit) {
+        clearUser()
+    }
+
 
     fun handleLogin(email: String, password: String) {
 
-        authViewModel.login(email, password,setUser)
-
+        authViewModel.login(email, password, setUser)
 
 
     }

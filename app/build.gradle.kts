@@ -83,6 +83,9 @@ dependencies {
     //jwt
     implementation("com.auth0.android:jwtdecode:2.0.2")
 
+    //coil
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

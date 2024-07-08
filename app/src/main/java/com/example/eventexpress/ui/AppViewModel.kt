@@ -15,11 +15,9 @@ class AppViewModel : ViewModel() {
 
     private val _user = MutableStateFlow<User>(
         User(
-            "John Doe",
-            "user",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpZCI6IjY2NjgzMjA1YjdmOTZmOGQwZmI2NTc5MSIsInJvbGUiOiJvcmdhbml6ZXIiLCJjcmVhdGVkQXQiOiIyMDI0LTA3LTAxVDE5OjM5OjI5LjUyNVoiLCJpYXQiOjE3MTk4NjI3NjksImV4cCI6MTcxOTk0OTE2OX0._72BsYZ7or_i8REoQUCAjgUwxSf8GFj8dTRi_Pi3Fyk",
-            "66683205b7f96f8d0fb65791",
-            true
+            "",
+            "",
+            "", "", false
         )
     )
     val user = _user
