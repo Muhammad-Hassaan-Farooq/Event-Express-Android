@@ -10,6 +10,7 @@ import com.example.eventexpress.EventExpressApplication
 import com.example.eventexpress.admin_home.data.AdminHomeRepository
 import com.example.eventexpress.admin_home.data.models.GetUsersResponse
 import com.example.eventexpress.data.User
+import com.example.eventexpress.user_home.data.models.ChangeRoleRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -56,6 +57,11 @@ class AdminHomeViewModel(private val adminHomeRepository: AdminHomeRepository):V
         if (_currentTab.value!=tab){
             _currentTab.value=tab
         }
+        if(_currentTab.value == Tabs.Users ){
+            if (_userPageUIState.value !is UserPageUIState.Success){
+                getUsers()
+            }
+        }
     }
     fun setUser(user: User){
         if (!_user.value.isSet) {
@@ -63,6 +69,24 @@ class AdminHomeViewModel(private val adminHomeRepository: AdminHomeRepository):V
             getOrganisers()
         }
 
+    }
+
+    fun changeRole(email:String,role:String){
+        viewModelScope.launch {
+            try {
+                val response = adminHomeRepository.changeRole(token ="Bearer "+ _user.value.token, changeRoleRequest = ChangeRoleRequest(email = email, role = role) )
+                if (response.success){
+                    getUsers()
+                    getOrganisers()
+                }
+                else{
+
+                }
+            }
+            catch (e:Exception){
+                TODO()
+            }
+        }
     }
     fun getOrganiserCount(){
         viewModelScope.launch {
@@ -96,6 +120,24 @@ class AdminHomeViewModel(private val adminHomeRepository: AdminHomeRepository):V
                 }
 
 
+        }
+    }
+
+    fun getUsers(){
+        viewModelScope.launch {
+            _userPageUIState.value = UserPageUIState.Loading
+            _userPageUIState.value = try {
+                val response = adminHomeRepository.getUsers("Bearer "+ _user.value.token)
+                if (response.success){
+                    UserPageUIState.Success(response)
+                }
+                else{
+                    UserPageUIState.Error
+                }
+            }
+            catch (e:Exception){
+                UserPageUIState.Error
+            }
         }
     }
 

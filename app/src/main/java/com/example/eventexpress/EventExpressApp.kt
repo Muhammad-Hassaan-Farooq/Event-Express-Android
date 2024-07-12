@@ -1,17 +1,16 @@
 package com.example.eventexpress
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.eventexpress.admin_home.AdminHomeScreen
 import com.example.eventexpress.auth.ui.screens.AuthScreen
+import com.example.eventexpress.event_page.EventPage
 import com.example.eventexpress.ui.AppViewModel
 import com.example.eventexpress.user_home.UserHomeScreen
 
@@ -52,12 +51,15 @@ fun EventExpressApp(modifier: Modifier = Modifier) {
             UserHomeScreen(user = appViewModel.user.value,navController)
         }
         composable(route = "admin_home") {
-            AdminHomeScreen(user=appViewModel.user.value)
+            AdminHomeScreen(user=appViewModel.user.value,navController)
         }
         composable(route = "organiser_home") {
             Column {
                 Text(text = "You are an organiser")
             }
+        }
+        composable(route="event/{event_id}"){navBackStackEntry ->
+            EventPage(navController=navController, eventId =  navBackStackEntry.arguments?.getString("event_id"),user=appViewModel.user.value)
         }
     }
 

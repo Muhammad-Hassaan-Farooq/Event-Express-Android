@@ -81,10 +81,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     //jwt
-    implementation("com.auth0.android:jwtdecode:2.0.2")
+    implementation(libs.jwtdecode)
 
     //coil
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
 
 
     testImplementation(libs.junit)

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Tour
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Tour
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,6 +38,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,12 +51,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.compose.EventExpressTheme
 import com.example.eventexpress.data.User
 import com.example.eventexpress.user_home.data.models.SavedEvents
 import com.example.eventexpress.user_home.ui.Tabs
@@ -67,9 +67,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +84,9 @@ fun UserHomeScreen(user: User, navController: NavHostController) {
     val userHomeUIState = userHomeViewModel.homeUIStateValue.collectAsState()
     val savedUIState = userHomeViewModel.savedUIStateValue.collectAsState()
     var expanded by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var logoutDialogExpanded by remember {
         mutableStateOf(false)
     }
 
@@ -134,7 +137,7 @@ fun UserHomeScreen(user: User, navController: NavHostController) {
                                         textAlign = TextAlign.Center
                                     )
                                 },
-                                onClick = { /*TODO*/ })
+                                onClick = { logoutDialogExpanded=true })
                         }
 
                     }
@@ -183,7 +186,26 @@ fun UserHomeScreen(user: User, navController: NavHostController) {
             exit = slideOutHorizontally() { fullWidth ->
                 -fullWidth
             }) {
-            homescreen(userHomeUIState.value, innerPadding)
+            homescreen(userHomeUIState.value, innerPadding,navController)
+        }
+        if (logoutDialogExpanded) {
+            AlertDialog(onDismissRequest = { logoutDialogExpanded = false }, confirmButton = {
+                TextButton(
+                    onClick = {expanded=false;logoutDialogExpanded=false; navController.navigate("Auth") }) {
+                    Text(text = "Logout")
+                }
+            },
+                dismissButton = {
+                    TextButton(onClick = { logoutDialogExpanded = false }) {
+                        Text(text = "Cancel")
+                    }
+                },
+                title = {
+                    Text(text = "Logout")
+                },
+                text = {
+                    Text(text = "Are you sure you want to log out?")
+                })
         }
         AnimatedVisibility(visible = currentTab.value == Tabs.YOUR_EVENTS,
             enter = slideInHorizontally() { fullWidth ->
@@ -247,7 +269,7 @@ fun savedScreen(innerPadding: PaddingValues, value: savedUIState) {
 
 
 @Composable
-fun homescreen(value: homeUIState, innerPadding: PaddingValues) {
+fun homescreen(value: homeUIState, innerPadding: PaddingValues, navController: NavHostController) {
     when (value) {
         homeUIState.Error -> {
             Column(
@@ -281,7 +303,7 @@ fun homescreen(value: homeUIState, innerPadding: PaddingValues) {
         is homeUIState.Success -> {
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
                 items((value as homeUIState.Success).getEventsResponse.data) { event ->
-                    EventCard(event = event)
+                    EventCard(event = event,navController)
                 }
             }
         }
@@ -352,7 +374,7 @@ fun SavedEventCard(event: SavedEvents) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventCard(event: AllEvents) {
+fun EventCard(event: AllEvents, navController: NavHostController) {
     val image = event.image.replace("http://", "https://")
     val date = event.startDate.substringBefore("T")
     val formattedDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
@@ -360,7 +382,7 @@ fun EventCard(event: AllEvents) {
     val finalDate = formattedDate.format(formatter)
 
     ElevatedCard(
-        onClick = { /*TODO*/ }, modifier = Modifier
+        onClick = { navController.navigate("event/${event._id}") }, modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 5.dp, vertical = 5.dp)
     ) {

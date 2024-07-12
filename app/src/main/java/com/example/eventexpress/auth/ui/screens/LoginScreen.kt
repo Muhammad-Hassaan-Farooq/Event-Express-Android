@@ -287,7 +287,6 @@ fun LoginScreen(
                                 Text(
                                     text = stringResource(id = R.string.sign_in),
                                 )
-                                Toast.makeText(LocalContext.current, "login successful",Toast.LENGTH_SHORT).show()
                                 onSuccessfulLogin()
                             }
                         }

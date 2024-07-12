@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonPinCircle
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.PersonPinCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -36,12 +37,14 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,18 +52,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.eventexpress.admin_home.ui.AdminHomeViewModel
 import com.example.eventexpress.admin_home.ui.OrganiserPageUIState
 import com.example.eventexpress.admin_home.ui.Tabs
+import com.example.eventexpress.admin_home.ui.UserPageUIState
 import com.example.eventexpress.data.User
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminHomeScreen(user: User) {
+fun AdminHomeScreen(user: User, navController: NavHostController) {
 
     val adminHomeViewModel: AdminHomeViewModel = viewModel(factory = AdminHomeViewModel.Factory)
     val currentTab = adminHomeViewModel.currentTab.collectAsState()
     val organiserPageUIState = adminHomeViewModel.organiserPageUIState.collectAsState()
+    val userPageUIState = adminHomeViewModel.userPageUIState.collectAsState()
+    var logoutDialogExpanded by remember {
+        mutableStateOf(false)
+    }
 
 
     LaunchedEffect(Unit) {
@@ -113,7 +122,7 @@ fun AdminHomeScreen(user: User) {
                                         textAlign = TextAlign.Center
                                     )
                                 },
-                                onClick = { /*TODO*/ })
+                                onClick = { logoutDialogExpanded = true })
                         }
 
                     }
@@ -168,15 +177,97 @@ fun AdminHomeScreen(user: User) {
             exit = slideOutHorizontally() { fullWidth ->
                 -fullWidth
             }) {
-                OrganiserPage(organiserPageUIState.value,innerPadding)
+            OrganiserPage(organiserPageUIState.value, innerPadding, adminHomeViewModel)
+        }
+
+        if (logoutDialogExpanded) {
+            AlertDialog(onDismissRequest = { logoutDialogExpanded = false }, confirmButton = {
+                TextButton(
+                    onClick = {expanded=false;logoutDialogExpanded=false; navController.navigate("Auth") }) {
+                    Text(text = "Logout")
+                }
+            },
+                dismissButton = {
+                    TextButton(onClick = { logoutDialogExpanded = false }) {
+                        Text(text = "Cancel")
+                    }
+                },
+                title = {
+                    Text(text = "Logout")
+                },
+                text = {
+                    Text(text = "Are you sure you want to log out?")
+                })
+        }
+
+        AnimatedVisibility(visible = currentTab.value == Tabs.Users,
+            enter = slideInHorizontally() { fullWidth ->
+                +fullWidth
+            },
+            exit = slideOutHorizontally() { fullWidth ->
+                +fullWidth
+            }) {
+            UserPage(userPageUIState.value, innerPadding, adminHomeViewModel)
         }
 
     }
 }
 
+
 @Composable
-fun OrganiserPage(organiserPageUIState: OrganiserPageUIState, innerPadding: PaddingValues) {
-    when(organiserPageUIState){
+fun UserPage(
+    userPageUIState: UserPageUIState,
+    innerPadding: PaddingValues,
+    adminHomeViewModel: AdminHomeViewModel
+) {
+    when (userPageUIState) {
+        UserPageUIState.Error -> {
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(imageVector = Icons.Filled.Error, contentDescription = null)
+                    Text(text = "Error loading Users", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+
+        UserPageUIState.Loading -> {
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) { CircularProgressIndicator() }
+        }
+
+        is UserPageUIState.Success -> {
+            LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                items(userPageUIState.response.data) { user ->
+                    UserCard(user, adminHomeViewModel)
+
+                }
+            }
+        }
+    }
+
+}
+
+@Composable
+fun OrganiserPage(
+    organiserPageUIState: OrganiserPageUIState,
+    innerPadding: PaddingValues,
+    adminHomeViewModel: AdminHomeViewModel
+) {
+    when (organiserPageUIState) {
         OrganiserPageUIState.Error -> {
             Column(
                 modifier = Modifier
@@ -194,6 +285,7 @@ fun OrganiserPage(organiserPageUIState: OrganiserPageUIState, innerPadding: Padd
                 }
             }
         }
+
         OrganiserPageUIState.Loading -> {
             Column(
                 modifier = Modifier
@@ -206,8 +298,8 @@ fun OrganiserPage(organiserPageUIState: OrganiserPageUIState, innerPadding: Padd
 
         is OrganiserPageUIState.Success -> {
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
-                items(organiserPageUIState.response.data){organiser->
-                    OrganiserCard(organiser)
+                items(organiserPageUIState.response.data) { organiser ->
+                    OrganiserCard(organiser, adminHomeViewModel)
 
                 }
             }
@@ -218,20 +310,67 @@ fun OrganiserPage(organiserPageUIState: OrganiserPageUIState, innerPadding: Padd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrganiserCard(organiser:com.example.eventexpress.admin_home.data.models.User) {
-    ElevatedCard(onClick = { /*TODO*/ }, modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 5.dp)) {
+fun OrganiserCard(
+    organiser: com.example.eventexpress.admin_home.data.models.User,
+    adminHomeViewModel: AdminHomeViewModel
+) {
+    ElevatedCard(
+        onClick = { /*TODO*/ }, modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+    ) {
 
-       Column(modifier = Modifier
-           .fillMaxWidth()
-           .height(200.dp), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(imageVector = Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(80.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                imageVector = Icons.Filled.Person,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp)
+            )
             Text(text = organiser.firstName + organiser.lastName)
             Text(text = organiser.email)
-            Button(onClick = { /*TODO*/ }) {
-               Text(text = "Change Role to User")
-           }
+            Button(onClick = { adminHomeViewModel.changeRole(organiser.email, "user") }) {
+                Text(text = "Change Role to User")
+            }
+        }
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserCard(
+    organiser: com.example.eventexpress.admin_home.data.models.User,
+    adminHomeViewModel: AdminHomeViewModel
+) {
+    ElevatedCard(
+        onClick = { /*TODO*/ }, modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                imageVector = Icons.Filled.Person,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp)
+            )
+            Text(text = organiser.firstName + organiser.lastName)
+            Text(text = organiser.email)
+            Button(onClick = { adminHomeViewModel.changeRole(organiser.email, "organizer") }) {
+                Text(text = "Change Role to Organiser")
+            }
         }
 
     }
